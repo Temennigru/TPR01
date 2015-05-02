@@ -28,6 +28,7 @@ int server(int port) {
 	int sockfd, newsockfd;
 	switch(setjmp(__ex_buf__)) {
 		case 0: {
+	signal(SIGINT, signal_catch);
 	wasTry = true;
 	socklen_t clilen;
 	char buffer[BUFSIZE];
@@ -83,7 +84,6 @@ int server(int port) {
 		bzero(buffer,BUFSIZE);
 		n = write(newsockfd,"GOT_IT",7);
 		while(1) {
-			FILE* out = fopen(buffer, "w");
 			bzero(buffer,BUFSIZE);
 
 			n = read(newsockfd,buffer,BUFSIZE - 1);
@@ -92,6 +92,8 @@ int server(int port) {
 				fprintf(log, "ERROR reading from socket\n");
 				continue;
 			}
+
+			fprintf(out, "%s", buffer);
 
 			n = write(newsockfd,"GOT_IT",7);
 

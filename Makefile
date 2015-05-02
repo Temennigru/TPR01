@@ -13,16 +13,16 @@ CFLAGS=-DNDEBUG
 all: server client
 
 client: $(CLIENTOBJS) client.o
-	$(CC) -o $@ -c $< $(CFLAGS) $(LDFLAGS)
+	$(CC) -o $@ $? $(CFLAGS) $(LDFLAGS)
 
 server: $(SERVEROBJS) server.o
-	$(CC) -o $@ -c $< $(CFLAGS) $(LDFLAGS)
+	$(CC) -o $@ $? $(CFLAGS) $(LDFLAGS)
 
 client.o: main.cpp
 	$(CC) main.cpp -c -o client.o $(CFLAGS) -D CLIENT
 
 server.o: main.cpp
-	$(CC) main.cpp -c -o client.o $(CFLAGS) -D SERVER
+	$(CC) main.cpp -c -o server.o $(CFLAGS) -D SERVER
 
 $(CLIENTOBJS): %.o : %.h
 
@@ -35,7 +35,7 @@ $(SERVEROBJS): %.o : %.cpp
 debug: | set_debug all
 
 set_debug:
-	$(eval CFLAGS=-Wall -DDEBUG)
+	$(eval CFLAGS=-Wall -DDEBUG -g)
 
 clean:
 	$(RM) $(CLIENTOBJS) $(SERVEROBJS) client.o server.o client server

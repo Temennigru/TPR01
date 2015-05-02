@@ -10,10 +10,11 @@
 #include "client_core.h"
 #include "defines.h"
 
+int write_to_host(const int sockfd, char*buf, size_t size, FILE* log);
 
 int client(const char address[], int port, const char dirName[]) {
 	FILE* log = fopen("log_client.txt", "w");
-    int sockfd, portno, n;
+    int sockfd, n;
     struct sockaddr_in serv_addr;
     struct hostent *server;
 
@@ -52,15 +53,20 @@ int client(const char address[], int port, const char dirName[]) {
 
     // aaaaaa
 
-    strcpy(buffer, "test.txt");
+    strcpy((char*)buffer, "test.txt");
 
-    int temp = write_to_host(address, port, buffer, strlen(buffer), log);
+    int temp = write_to_host(sockfd, buffer, strlen(buffer), log);
+
+    if (temp != 0) {
+		fclose(log);
+    	return temp;
+    }
 
     printf("Please enter the message: ");
     bzero(buffer,2048);
     fgets(buffer,2047,stdin);
 
-    int temp = write_to_host(address, port, buffer, strlen(buffer), log);
+    temp = write_to_host(sockfd, buffer, strlen(buffer), log);
 
     if (temp != 0) {
 		fclose(log);
@@ -85,7 +91,7 @@ int client(const char address[], int port, const char dirName[]) {
 
 }
 
-int write_to_host(const int sockfd, int port, void*buf, size_t size, FILE* log) {
+int write_to_host(const int sockfd, char*buf, size_t size, FILE* log) {
 
 	int i = 0, j = 0, n = 0;
 
@@ -94,19 +100,13 @@ int write_to_host(const int sockfd, int port, void*buf, size_t size, FILE* log) 
 
 	for (i = 0; i < size; i += BUFSIZE - 1) {
 		if (i + BUFSIZE - 1 <= size) {
-		    for (j = 0; j < BUFSIZE - 1; j++) {
-		    	buffer[j] = buf[j];
-		    }
-	    	n = write(sockfd,buffer,BUFSIZE);
+	    	n = write(sockfd,&(buf[i]),BUFSIZE);
 		    if (n < 0) {
 		    	fprintf(log, "ERROR writing to socket");
 		    	return 4;
 		    }
 	    } else {
-		    for (j = 0; j < size - i; j++) {
-		    	buffer[j] = buf[j];
-		    }
-	    	n = write(sockfd,buffer,size - i);
+	    	n = write(sockfd,&(buf[i]),size - i);
 		    if (n < 0) {
 		    	fprintf(log, "ERROR writing to socket");
 		    	return 4;
@@ -124,7 +124,7 @@ int write_to_host(const int sockfd, int port, void*buf, size_t size, FILE* log) 
 		    }
 
 		    // Wait for server to get message
-		    if (!strcmp(buffer), "GOT_IT") {
+		    if (!strcmp(buffer, "GOT_IT")) {
 		    	break;
 		    }
 		}

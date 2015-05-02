@@ -20,21 +20,23 @@
 int main (int argc, char *argv[]) {
 	int res = -1;
 	#ifdef CLIENT
-	if (argc == 0) { // Test args
-		client("localhost", 8888, "test");
+	if (argc == 1) { // Test args
+		res = client("localhost", 8888, "test");
 	} else if (argc < ARGC || argc > ARGC) {
 		printf("Error: Wrong number of args\n");
+		exit(1);
 	} else {
-		res = client(argc[1], atoi(argc[2]), argc[3]);
+		res = client(argv[1], atoi(argv[2]), argv[3]);
 	}
 	const char mode[32] = "Client";
 	#endif
 
 	#ifdef SERVER
-	if (argc == 0) { // Test args
-		server(8888);
+	if (argc == 1) { // Test args
+		res = server(8888);
 	} else if (argc < ARGC || argc > ARGC) {
 		printf("Error: Wrong number of args\n");
+		exit(1);
 	} else {
 		res = server(atoi(argv[1]));
 	}
