@@ -25,8 +25,10 @@ static void signal_catch(int signo) {
 
 int server(int port) {
 	FILE* log = fopen("log_server.txt", "w");
-	int sockfd, newsockfd;
+	int sockfd = 0, newsockfd = 0;
+	// Set SIGSEGV return spot
 	switch(setjmp(__ex_buf__)) {
+		// Case no SIGSEGV
 		case 0: {
 	signal(SIGINT, signal_catch);
 	wasTry = true;
@@ -64,38 +66,64 @@ int server(int port) {
 
 		bzero(buffer,BUFSIZE);
 
-		n = read(newsockfd,buffer,BUFSIZE - 1);
+		n = recv(newsockfd,buffer,BUFSIZE - 1, 0);
+
+		#if defined(NDEBUG) && defined(__GNUC__)
+		#else
+		printf("Your message\n%d -> (%s)\n", n, buffer);
+		#endif
 		
 		if (n < 0) {
 			fprintf(log, "ERROR reading from socket\n");
 			continue;
 		}
 
-		bool isNotZero = false;
 		// Check if nothing was read
-		for (int i = 0; i < BUFSIZE; i++) {
-			isNotZero &= buffer[i];
-		}
 
-		if (!isNotZero) { continue; }
+		if (!buffer[0]) { continue; }
 
 		// Read stuff here
 		FILE* out = fopen(buffer, "w");
 		bzero(buffer,BUFSIZE);
-		n = write(newsockfd,"GOT_IT",7);
+		n = send(newsockfd,"GOT_IT",7, 0);
+		int timeout = 0;
 		while(1) {
 			bzero(buffer,BUFSIZE);
 
-			n = read(newsockfd,buffer,BUFSIZE - 1);
-			
+			n = recv(newsockfd,buffer,BUFSIZE - 1, 0);
+
+    		#if defined(NDEBUG) && defined(__GNUC__)
+    		#else
+			printf("Your message\n%d -> (%s)\n", n, buffer);
+			#endif
+
+			// Check if nothing was read
+			if (!buffer[0]) {
+				timeout++;
+            	// Timeout
+            	if (timeout == 20) {
+                	fprintf(log, "ERROR: Connection timeout. Closing connection.\n");
+					close(newsockfd);
+					newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+                	break;
+            	}
+            continue;
+        	}
+        	timeout = 0;
+
 			if (n < 0) {
 				fprintf(log, "ERROR reading from socket\n");
 				continue;
 			}
 
+    		#if defined(NDEBUG) && defined(__GNUC__)
+    		#else
+			printf("Writing to output\n");
+			#endif
+
 			fprintf(out, "%s", buffer);
 
-			n = write(newsockfd,"GOT_IT",7);
+			n = send(newsockfd,"GOT_IT",7, 0);
 
 			if (n < 0) {
 				fprintf(log, "ERROR writing to socket\n");
@@ -111,6 +139,8 @@ int server(int port) {
 
 	break;
 	} // End longjmp case 0
+	
+	// Case SIGSEGV
 
 	case 1: {
 		close(newsockfd);
@@ -119,9 +149,13 @@ int server(int port) {
 		return 0;
 		break;
 	}
+
+	// Something other than 0 or 1 was returned. This should never happen.
+
 	default: {
 		printf ("Some error occured\n");
 		fclose(log);
 		abort();
 	} }// End longjmp switch
+	return 7;
 }
