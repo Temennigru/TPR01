@@ -105,7 +105,7 @@ int server(int port) {
                 	fprintf(log, "ERROR: Connection timeout. Closing connection.\n");
 					close(newsockfd);
 					newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
-                	break;
+                	return 8;
             	}
             continue;
         	}
@@ -114,6 +114,14 @@ int server(int port) {
 			if (n < 0) {
 				fprintf(log, "ERROR reading from socket\n");
 				continue;
+			}
+
+			if (!strcmp(buffer, "BYE")) { 
+				n = send(newsockfd,"GOT_IT",7, 0);
+				close(newsockfd);
+				close(sockfd);
+				fclose(log);
+				return 0;
 			}
 
     		#if defined(NDEBUG) && defined(__GNUC__)
@@ -128,13 +136,6 @@ int server(int port) {
 			if (n < 0) {
 				fprintf(log, "ERROR writing to socket\n");
 				continue;
-			}
-
-			if (!strcmp(buffer, "BYE")) { 
-				close(newsockfd);
-				close(sockfd);
-				fclose(log);
-				return 0;
 			}
 		}
 
