@@ -1,0 +1,14 @@
+Buffer size: 10 | Message size: 10 | Time: 0.000206
+Buffer size: 10 | Message size: 20 | Time: 0.000201
+Buffer size: 10 | Message size: 30 | Time: 0.000275
+Buffer size: 10 | Message size: 40 | Time: 0.000276
+Buffer size: 10 | Message size: 50 | Time: 0.000507
+Buffer size: 10 | Message size: 100 | Time: 0.000668
+Buffer size: 10 | Message size: 1000 | Time: 0.003733
+Buffer size: 10 | Message size: 10000 | Time: 0.028370
+
+Buffer size: 100 | Message size: 10000 | Time: 0.002281
+Buffer size: 1000 | Message size: 10000 | Time: 0.000515
+Buffer size: 2048 | Message size: 10000 | Time: 0.000273
+Buffer size: 4096 | Message size: 10000 | Time: 0.000178
+Buffer size: 15000 | Message size: 10000 | Time: 0.000208
