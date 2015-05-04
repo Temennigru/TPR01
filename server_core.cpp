@@ -130,7 +130,12 @@ int server(int port) {
 				continue;
 			}
 
-			if (!strcmp(buffer, "BYE")) { break; }
+			if (!strcmp(buffer, "BYE")) { 
+				close(newsockfd);
+				close(sockfd);
+				fclose(log);
+				return 0;
+			}
 		}
 
 

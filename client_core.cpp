@@ -7,11 +7,14 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h> 
-#include <string.h>
+#include <cstring>
+#include <dirent.h>
+#include <string>
 #include "client_core.h"
 #include "defines.h"
 
-int write_to_host(const int sockfd, char*buf, size_t size, FILE* log);
+int write_to_host(const int sockfd, const char*buf, size_t size, FILE* log);
+const char* read_dir(const char dirName[]);
 
 int client(const char address[], int port, const char dirName[]) {
 	FILE* log = fopen("log_client.txt", "w");
@@ -19,7 +22,7 @@ int client(const char address[], int port, const char dirName[]) {
     struct sockaddr_in serv_addr;
     struct hostent *server;
 
-    char buffer[100000];
+    char buffer[2048];
 
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -51,10 +54,10 @@ int client(const char address[], int port, const char dirName[]) {
     	return 3;
     }
 
+    // Create remote file
 
-    // aaaaaa
-
-    strcpy((char*)buffer, "test.txt");
+    strcpy((char*)buffer, address);
+    strcpy((char*)(&(buffer[strlen(address)])), dirName);
 
     int temp = write_to_host(sockfd, buffer, strlen(buffer), log);
 
@@ -63,30 +66,21 @@ int client(const char address[], int port, const char dirName[]) {
     	return temp;
     }
 
-    printf("Please enter the message length: ");
-    bzero(buffer,100000);
-    fgets(buffer,99999,stdin);
-    int msglen = atoi(buffer);
-    int i = 0;
-
-    for (i = 0; i < msglen; i++) {
-        buffer[i] = 'a';
-    }
-
-    buffer[i] = '\0';
+    // Read dir contents
+    const char* outString = read_dir(dirName);
 
     struct timeval tv_before, tv_after;
 
     gettimeofday(&tv_before, NULL);
 
-    temp = write_to_host(sockfd, buffer, strlen(buffer), log);
+    temp = write_to_host(sockfd, outString, strlen(outString), log);
 
     gettimeofday(&tv_after, NULL);
 
     time_t seconds = tv_after.tv_sec - tv_before.tv_sec;
     time_t useconds = tv_after.tv_usec - tv_before.tv_usec;
 
-    printf("Buffer size: %d | Message size: %d | Time: %ld.%06ld\n", BUFSIZE, msglen, seconds, useconds);
+    printf("Buffer size: %d | Message size: %d | Time: %ld.%06ld\n", BUFSIZE, (int)strlen(outString), seconds, useconds);
 
     if (temp != 0) {
 		fclose(log);
@@ -96,11 +90,12 @@ int client(const char address[], int port, const char dirName[]) {
     close(sockfd);
 
     fclose(log);
+
     return 0;
 
 }
 
-int write_to_host(const int sockfd, char*buf, size_t size, FILE* log) {
+int write_to_host(const int sockfd, const char*buf, size_t size, FILE* log) {
 
 	int i = 0, timeout = 0, n = 0;
 
@@ -149,4 +144,20 @@ int write_to_host(const int sockfd, char*buf, size_t size, FILE* log) {
     }
 
     return 0;
+}
+
+const char* read_dir(const char dirName[]) {
+    DIR* dirReader = opendir(dirName);
+    struct dirent *dir;
+    std::string out = "";
+
+    while ((dir = readdir(dirReader)) != NULL) {
+
+        out += dir->d_name;
+        out += "\n";
+
+    }
+
+    closedir(dirReader);
+    return out.c_str();
 }
